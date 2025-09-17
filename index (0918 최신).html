@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아자영어학원 - 성적 조회</title>
+    <script type='text/javascript' src='https://api.netlify.com/LvuCWHBWzSdJwhErE6u0Uz7h5ckBhaqDI87RnUoEgPDxl8E-aQMzTGa3K6JuEKXE_yqK5MBiZfhvzA0hX8mYHj9zAvbBX83QgG_G2xq8BK4k-k6RVWeJtW6rhCjiU6711QjkSgSGNWFsd6saU-nMOjr4pvdBR8aIFnzb45FFtqo='></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        /* 로그인 화면 */
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            margin: 100px auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .login-card h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        .login-card p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        /* 대시보드 */
+        .dashboard {
+            display: none;
+        }
+        .header-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        /* 로고 추가 */
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo-emoji {
+            font-size: 2rem;
+        }
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .student-name {
+            font-size: 2rem;
+            color: #333;
+            font-weight: 700;
+        }
+        .student-class {
+            color: #666;
+            margin-top: 5px;
+            font-size: 1.1rem;
+        }
+        .logout-btn {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        /* 월 선택 필터 */
+        .filter-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .filter-group label {
+            font-weight: 600;
+            color: #666;
+        }
+        .filter-select {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            background: white;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        /* 통계 카드 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-detail {
+            color: #999;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        /* 차트 컨테이너 */
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        /* 성적 테이블 - 모바일 최적화 */
+        .table-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        .table-wrapper {
+            min-width: 500px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        .score-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        .score-pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .score-fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        /* 출석 달력 스타일 */
+        .calendar-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+        .calendar-nav button {
+            padding: 8px 15px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .calendar-nav button:hover {
+            background: #e0e0e0;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 700;
+            color: #666;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 600;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .calendar-day:hover {
+            transform: scale(1.05);
+        }
+        .calendar-day.empty {
+            background: transparent;
+            cursor: default;
+        }
+        .calendar-day.empty:hover {
+            transform: none;
+        }
+        .calendar-day.attend {
+            background: #4caf50;
+            color: white;
+        }
+        .calendar-day.absent {
+            background: #f44336;
+            color: white;
+        }
+        .calendar-day.late {
+            background: #ffc107;
+            color: white;
+        }
+        .calendar-day.no-class {
+            background: #e0e0e0;
+            color: #999;
+        }
+        .calendar-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        /* 네온 로딩 애니메이션 */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+        .pulse-loader {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+        }
+        .pulse-loader::before,
+        .pulse-loader::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .pulse-loader::after {
+            animation-delay: 1s;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
+        .loading-text {
+            font-size: 1.2rem;
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            animation: glow 2s ease-in-out infinite;
+        }
+        @keyframes glow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        .loading-dots {
+            display: inline-block;
+        }
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+        }
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+        .loading-progress-bar {
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            animation: progress 2s ease-in-out infinite;
+        }
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        /* 순위 표시 스타일 */
+        .ranking-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            color: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .ranking-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            opacity: 0.95;
+        }
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .ranking-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            position: relative;
+        }
+        .ranking-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .ranking-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .ranking-name {
+            font-size: 1rem;
+            opacity: 0.85;
+        }
+        .trophy-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        /* 1위 특별 효과 */
+        .ranking-card.is-champion {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 255, 255, 0.2));
+            border: 2px solid gold;
+            overflow: hidden;
+            animation: champion-glow 2s ease-in-out infinite;
+        }
+        @keyframes champion-glow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5),
+                            inset 0 0 20px rgba(255, 215, 0, 0.1);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.8),
+                            inset 0 0 30px rgba(255, 215, 0, 0.2);
+            }
+        }
+        .crown-animation {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            animation: crown-bounce 2s ease-in-out infinite;
+        }
+        @keyframes crown-bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+            25% { transform: translateX(-50%) translateY(-5px) rotate(-5deg); }
+            75% { transform: translateX(-50%) translateY(-5px) rotate(5deg); }
+        }
+        .fire-text {
+            background: linear-gradient(45deg, #FFD700, #FFA500, #FF6347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fire-gradient 2s ease-in-out infinite;
+            font-weight: 900;
+        }
+        @keyframes fire-gradient {
+            0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+            50% { filter: hue-rotate(10deg) brightness(1.2); }
+        }
+        /* 2,3등 순위 스타일 */
+        .sub-ranking {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+        .top3-list {
+            margin-top: 15px;
+        }
+        .rank-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+        .rank-medal {
+            flex-shrink: 0;
+        }
+        .rank-score {
+            font-weight: bold;
+            margin: 0 10px;
+            flex-shrink: 0;
+        }
+        .rank-name {
+            opacity: 0.9;
+            text-align: right;
+            flex-grow: 1;
+        }
+        /* 모바일 반응형 추가 개선 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .student-info {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .chart-card {
+                padding: 20px;
+            }
+            .calendar-grid {
+                gap: 4px;
+            }
+            .calendar-day {
+                font-size: 0.85rem;
+            }
+            .header-logo {
+                flex-direction: column;
+                text-align: center;
+            }
+            .table-card {
+                padding: 15px;
+            }
+            th, td {
+                padding: 8px 5px;
+                font-size: 0.75rem;
+            }
+            .score-badge {
+                font-size: 0.7rem;
+                padding: 2px 6px;
+            }
+            .chart-title {
+                font-size: 1.2rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .table-card {
+                padding: 10px;
+            }
+            th {
+                font-size: 0.7rem;
+            }
+            td {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 로그인 화면 -->
+        <div class="login-card" id="loginSection">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="images/logo.jpg" alt="아자영어학원" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+            </div>
+            <h1>아자영어학원</h1>
+            <p>성적 조회 시스템</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>학생 이름</label>
+                    <input type="text" id="studentName" placeholder="학생 이름을 입력하세요" required>
+                </div>
+                <div class="form-group">
+                    <label>학부모 연락처 (뒤 4자리)</label>
+                    <input type="text" id="contactNumber" pattern="\d{4}" maxlength="4" placeholder="0000" required>
+                </div>
+                <button type="submit" class="btn">성적 확인하기</button>
+            </form>
+            
+            <div id="loginError" class="error" style="display: none;"></div>
+        </div>
+
+        <!-- 대시보드 -->
+        <div class="dashboard" id="dashboardSection">
+            <div class="header-card">
+                <div class="header-logo">
+                    <img src="images/logo.jpg" alt="AZA" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                    <span class="logo-text">아자영어학원 AZA English</span>
+                </div>
+                <div class="student-info">
+                    <div>
+                        <div class="student-name" id="displayName">학생 이름</div>
+                        <div class="student-class" id="displayClass">초등부 | 8-12월 성적</div>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">로그아웃</button>
+                </div>
+            </div>
+
+            <!-- 월 선택 필터 -->
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label>📅 월 선택:</label>
+                    <select class="filter-select" id="monthFilter" onchange="filterByMonth()">
+                        <option value="all">전체</option>
+                        <option value="1">1월</option>
+                        <option value="2">2월</option>
+                        <option value="3">3월</option>
+                        <option value="4">4월</option>
+                        <option value="5">5월</option>
+                        <option value="6">6월</option>
+                        <option value="7">7월</option>
+                        <option value="8">8월</option>
+                        <option value="9">9월</option>
+                        <option value="10">10월</option>
+                        <option value="11">11월</option>
+                        <option value="12">12월</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>현재 표시:</label>
+                    <span id="currentFilter" style="font-weight: 600; color: #667eea;">전체 기간</span>
+                </div>
+            </div>
+
+            <!-- 학원 전체 순위 -->
+            <div class="ranking-section" id="rankingSection">
+                <h2 class="ranking-title">🏆 <span id="rankingMonth"></span>월 학원 전체 1위</h2>
+                <div class="ranking-grid">
+                    <div class="ranking-card" id="vocabRankCard">
+                        <div class="trophy-icon">🥇</div>
+                        <div class="ranking-label">어휘 1위</div>
+                        <div class="ranking-value" id="vocabTopScore">-</div>
+                        <div class="ranking-name" id="vocabTopName">-</div>
+                    </div>
+                    <div class="ranking-card" id="spellRankCard">
+                        <div class="trophy-icon">🥇</div>
+                        <div class="ranking-label">스펠 1위</div>
+                        <div class="ranking-value" id="spellTopScore">-</div>
+                        <div class="ranking-name" id="spellTopName">-</div>
+                    </div>
+                    <div class="ranking-card" id="avgRankCard">
+                        <div class="trophy-icon">🏆</div>
+                        <div class="ranking-label">이달의 평균 1위</div>
+                        <div class="ranking-value" id="avgTopScore">-</div>
+                        <div class="ranking-name" id="avgTopName">-</div>
+                    </div>
+                </div>
+
+                <!-- 2,3등 추가 -->
+                <h3 style="text-align: center; margin-top: 30px; margin-bottom: 20px; opacity: 0.9;">🏅 TOP 3 순위</h3>
+                <div class="ranking-grid">
+                    <div class="ranking-card sub-ranking">
+                        <div class="ranking-label">어휘 TOP 3</div>
+                        <div class="top3-list" id="vocabTop3">
+                            <div class="rank-item">
+                                <span class="rank-medal">🥇</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                            <div class="rank-item">
+                                <span class="rank-medal">🥈</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                            <div class="rank-item">
+                                <span class="rank-medal">🥉</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ranking-card sub-ranking">
+                        <div class="ranking-label">스펠 TOP 3</div>
+                        <div class="top3-list" id="spellTop3">
+                            <div class="rank-item">
+                                <span class="rank-medal">🥇</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                            <div class="rank-item">
+                                <span class="rank-medal">🥈</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                            <div class="rank-item">
+                                <span class="rank-medal">🥉</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ranking-card sub-ranking">
+                        <div class="ranking-label">평균 TOP 3</div>
+                        <div class="top3-list" id="avgTop3">
+                            <div class="rank-item">
+                                <span class="rank-medal">🥇</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                            <div class="rank-item">
+                                <span class="rank-medal">🥈</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                            <div class="rank-item">
+                                <span class="rank-medal">🥉</span>
+                                <span class="rank-score">-</span>
+                                <span class="rank-name">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 통계 카드 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">📚 어휘 평균</div>
+                    <div class="stat-value" id="vocabAvg">-</div>
+                    <div class="stat-detail" id="vocabDetail">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">✏️ 스펠 평균</div>
+                    <div class="stat-value" id="spellAvg">-</div>
+                    <div class="stat-detail" id="spellDetail">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📖 독해 평균</div>
+                    <div class="stat-value" id="readingAvg">-</div>
+                    <div class="stat-detail" id="readingDetail">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">✅ 출석률</div>
+                    <div class="stat-value" id="attendanceRate">-</div>
+                    <div class="stat-detail" id="attendanceDetail">-</div>
+                </div>
+            </div>
+
+            <!-- 출석 달력 -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <h2 class="chart-title">📅 출석 현황</h2>
+                    <div class="calendar-nav">
+                        <button onclick="changeMonth(-1)">◀ 이전</button>
+                        <span id="calendarMonth" style="font-weight: 600; padding: 0 15px;">2024년 8월</span>
+                        <button onclick="changeMonth(1)">다음 ▶</button>
+                    </div>
+                </div>
+                
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- 동적으로 채워짐 -->
+                </div>
+                
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4caf50;"></div>
+                        <span>출석</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f44336;"></div>
+                        <span>결석</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffc107;"></div>
+                        <span>지각</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e0e0e0;"></div>
+                        <span>수업 없음</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 차트 -->
+            <div class="chart-card">
+                <h2 class="chart-title">📈 성적 추이</h2>
+                <div class="chart-container">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 성적 상세 테이블 -->
+            <div class="table-card">
+                <h2 class="chart-title">📋 상세 성적표</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>출석</th>
+                                <th>어휘<br>(94점)</th>
+                                <th>스펠<br>(80점)</th>
+                                <th>독해<br>(80점)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scoreTableBody">
+                            <!-- 동적으로 채워짐 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로딩 -->
+        <div class="loading" id="loadingSection" style="display: none;">
+            <div class="loading-container">
+                <div class="pulse-loader"></div>
+                <h2 class="loading-text">성적 데이터 조회중<span class="loading-dots"></span></h2>
+                <div class="loading-progress">
+                    <div class="loading-progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API URL
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyXnEvm9JLR7Xl116xbb7ovBmv0PV3VOSiNIy0avSe3aP9smL6SLcG91WjdmG7yNsAL/exec';
+
+        // 이름 마스킹 함수
+        function maskName(fullName) {
+            if (!fullName || fullName.length === 0) return '-';
+            if (fullName.length === 1) return fullName; // 한 글자 이름은 그대로
+            if (fullName.length === 2) return fullName[0] + 'O'; // 두 글자 이름
+            
+            // 세 글자 이상: 첫 글자 + O + 마지막 글자
+            const firstChar = fullName[0];
+            const lastChar = fullName[fullName.length - 1];
+            const maskedMiddle = 'O'.repeat(fullName.length - 2);
+            return firstChar + maskedMiddle + lastChar;
+        }
+
+        // 리더보드 표시 함수 - 수정된 버전
+        async function displayLeaderboard(currentStudentName) {
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth() + 1;
+            
+            // 월 표시
+            document.getElementById('rankingMonth').textContent = currentMonth;
+            
+            try {
+                // 실제 API 호출
+                const response = await fetch(`${API_URL}?leaderboard=true&month=${currentMonth}`);
+                const data = await response.json();
+                
+                if (data.success && data.leaders) {
+                    // 1위 데이터 표시
+                    const leaders = data.leaders;
+                    
+                    document.getElementById('vocabTopScore').textContent = leaders.vocab.score + '점';
+                    document.getElementById('vocabTopName').textContent = maskName(leaders.vocab.name);
+                    
+                    document.getElementById('spellTopScore').textContent = leaders.spell.score + '점';
+                    document.getElementById('spellTopName').textContent = maskName(leaders.spell.name);
+                    
+                    document.getElementById('avgTopScore').textContent = leaders.average.score + '점';
+                    document.getElementById('avgTopName').textContent = maskName(leaders.average.name);
+                    
+                    // 특별 효과 처리
+                    const cards = {
+                        vocab: document.getElementById('vocabRankCard'),
+                        spell: document.getElementById('spellRankCard'),
+                        average: document.getElementById('avgRankCard')
+                    };
+                    
+                    // 기존 효과 제거
+                    Object.values(cards).forEach(card => {
+                        card.classList.remove('is-champion');
+                        const crown = card.querySelector('.crown-animation');
+                        if (crown) crown.remove();
+                    });
+                    
+                    // 본인이 1위면 효과 추가
+                    if (leaders.vocab.name === currentStudentName) {
+                        cards.vocab.classList.add('is-champion');
+                        const crown = document.createElement('div');
+                        crown.className = 'crown-animation';
+                        crown.textContent = '👑';
+                        cards.vocab.appendChild(crown);
+                        document.getElementById('vocabTopName').classList.add('fire-text');
+                    }
+                    
+                    if (leaders.spell.name === currentStudentName) {
+                        cards.spell.classList.add('is-champion');
+                        const crown = document.createElement('div');
+                        crown.className = 'crown-animation';
+                        crown.textContent = '👑';
+                        cards.spell.appendChild(crown);
+                        document.getElementById('spellTopName').classList.add('fire-text');
+                    }
+                    
+                    if (leaders.average.name === currentStudentName) {
+                        cards.average.classList.add('is-champion');
+                        const crown = document.createElement('div');
+                        crown.className = 'crown-animation';
+                        crown.textContent = '👑';
+                        cards.average.appendChild(crown);
+                        document.getElementById('avgTopName').classList.add('fire-text');
+                    }
+
+                    // TOP 3 표시 - 수정된 부분
+                    if (data.top3) {
+                        // 어휘 TOP 3
+                        const vocabItems = document.querySelectorAll('#vocabTop3 .rank-item');
+                        data.top3.vocab.forEach((student, i) => {
+                            if (vocabItems[i] && student) {
+                                const item = vocabItems[i];
+                                item.querySelector('.rank-score').textContent = student.vocabAvg + '점';
+                                item.querySelector('.rank-name').textContent = maskName(student.name);
+                            }
+                        });
+                        
+                        // 스펠 TOP 3
+                        const spellItems = document.querySelectorAll('#spellTop3 .rank-item');
+                        data.top3.spell.forEach((student, i) => {
+                            if (spellItems[i] && student) {
+                                const item = spellItems[i];
+                                item.querySelector('.rank-score').textContent = student.spellAvg + '점';
+                                item.querySelector('.rank-name').textContent = maskName(student.name);
+                            }
+                        });
+                        
+                        // 평균 TOP 3
+                        const avgItems = document.querySelectorAll('#avgTop3 .rank-item');
+                        data.top3.average.forEach((student, i) => {
+                            if (avgItems[i] && student) {
+                                const item = avgItems[i];
+                                item.querySelector('.rank-score').textContent = student.totalAvg + '점';
+                                item.querySelector('.rank-name').textContent = maskName(student.name);
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('리더보드 API 호출 실패:', error);
+                // 오류 발생 시 기본값 유지
+            }
+        }
+
+        let chart = null;
+        let allData = null; // 전체 데이터 저장
+        let currentMonth = 8; // 현재 표시 중인 달력 월
+        let currentYear = 2024; // 현재 표시 중인 달력 연도
+        
+        // 로그인 폼 제출
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('studentName').value;
+            const contact = document.getElementById('contactNumber').value;
+            
+            if (!name || !contact) {
+                showError('이름과 연락처를 모두 입력해주세요.');
+                return;
+            }
+            
+            await fetchStudentData(name, contact);
+        });
+        
+        // 학생 반 판별 함수
+        function determineClass(studentName) {
+            // 실제로는 데이터베이스에서 학생 정보를 가져와야 함
+            const charCode = studentName.charCodeAt(0);
+            
+            if (charCode % 3 === 0) {
+                return '초등부';
+            } else if (charCode % 3 === 1) {
+                return '중등부';
+            } else {
+                return '수능부';
+            }
+        }
+        
+        // 학생 데이터 가져오기
+        async function fetchStudentData(name, contact) {
+            // 로딩 표시
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('loadingSection').style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}?name=${encodeURIComponent(name)}&contact=${contact}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 전체 데이터 저장
+                allData = data;
+                
+                // 학생 반 정보 추가
+                allData.studentClass = determineClass(data.student);
+                
+                // 대시보드 표시
+                displayDashboard(data);
+                
+                // 달력 초기화
+                if (data.scores && data.scores.length > 0) {
+                    const firstDate = new Date(data.scores[0].date);
+                    currentMonth = firstDate.getMonth() + 1;
+                    currentYear = firstDate.getFullYear();
+                    drawCalendar();
+                }
+                
+            } catch (error) {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                showError(error.message || '데이터를 불러오는데 실패했습니다.');
+            }
+        }
+        
+        // 월별 필터링
+        function filterByMonth() {
+            const selectedMonth = document.getElementById('monthFilter').value;
+            
+            if (selectedMonth === 'all') {
+                document.getElementById('currentFilter').textContent = '전체 기간';
+                displayDashboard(allData);
+            } else {
+                const monthNum = parseInt(selectedMonth);
+                document.getElementById('currentFilter').textContent = `${monthNum}월`;
+                
+                // 선택한 월의 데이터만 필터링
+                const filteredScores = allData.scores.filter(score => {
+                    const date = new Date(score.date);
+                    return date.getMonth() + 1 === monthNum;
+                });
+                
+                // 필터링된 데이터로 새로운 객체 생성
+                const filteredData = {
+                    ...allData,
+                    scores: filteredScores,
+                    averages: calculateAverages(filteredScores),
+                    attendDays: filteredScores.filter(s => s.attendance === '출석').length,
+                    totalDays: filteredScores.length
+                };
+                
+                displayDashboard(filteredData);
+            }
+        }
+        
+        // 평균 계산 함수
+        function calculateAverages(scores) {
+            const vocabScores = scores.filter(s => s.vocab).map(s => s.vocab);
+            const spellScores = scores.filter(s => s.spell).map(s => s.spell);
+            const readingScores = scores.filter(s => s.reading).map(s => s.reading);
+            
+            return {
+                vocab: vocabScores.length > 0 ? vocabScores.reduce((a, b) => a + b, 0) / vocabScores.length : 0,
+                spell: spellScores.length > 0 ? spellScores.reduce((a, b) => a + b, 0) / spellScores.length : 0,
+                reading: readingScores.length > 0 ? readingScores.reduce((a, b) => a + b, 0) / readingScores.length : 0
+            };
+        }
+        
+        // 달력 그리기
+        function drawCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            // 월 표시 업데이트
+            document.getElementById('calendarMonth').textContent = `${currentYear}년 ${currentMonth}월`;
+            
+            // 요일 헤더
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            days.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-day-header';
+                dayHeader.textContent = day;
+                grid.appendChild(dayHeader);
+            });
+            
+            // 해당 월의 첫 날과 마지막 날
+            const firstDay = new Date(currentYear, currentMonth - 1, 1);
+            const lastDay = new Date(currentYear, currentMonth, 0);
+            const startPadding = firstDay.getDay();
+            
+            // 출석 데이터를 날짜별로 매핑
+            const attendanceMap = {};
+            if (allData && allData.scores) {
+                allData.scores.forEach(score => {
+                    const date = new Date(score.date);
+                    if (date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear) {
+                        attendanceMap[date.getDate()] = score.attendance;
+                    }
+                });
+            }
+            
+            // 빈 칸 채우기
+            for (let i = 0; i < startPadding; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                grid.appendChild(emptyDay);
+            }
+            
+            // 날짜 채우기
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                
+                // 출석 상태에 따른 클래스 추가
+                const attendance = attendanceMap[day];
+                if (attendance === '출석') {
+                    dayElement.classList.add('attend');
+                } else if (attendance === '결석') {
+                    dayElement.classList.add('absent');
+                } else if (attendance === '지각') {
+                    dayElement.classList.add('late');
+                } else {
+                    dayElement.classList.add('no-class');
+                }
+                
+                // 툴팁 추가
+                if (attendance) {
+                    dayElement.title = `${currentMonth}월 ${day}일: ${attendance}`;
+                }
+                
+                grid.appendChild(dayElement);
+            }
+        }
+        
+        // 달력 월 변경
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            } else if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            drawCalendar();
+        }
+        
+        // 대시보드 표시
+        function displayDashboard(data) {
+            // 로딩 숨기고 대시보드 표시
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'block';
+            
+            // 학생 이름
+            document.getElementById('displayName').textContent = data.student;
+            
+            // 학생 반 정보 표시
+            const studentClass = data.studentClass || determineClass(data.student);
+            const dateRange = data.scores && data.scores.length > 0 
+                ? `${new Date(data.scores[0].date).getMonth() + 1}-${new Date(data.scores[data.scores.length - 1].date).getMonth() + 1}월 성적`
+                : '성적';
+            document.getElementById('displayClass').textContent = `${studentClass} | ${dateRange}`;
+            
+            // 리더보드 표시
+            displayLeaderboard(data.student);
+            
+            // 평균 점수
+            document.getElementById('vocabAvg').textContent = data.averages.vocab.toFixed(1);
+            document.getElementById('spellAvg').textContent = data.averages.spell.toFixed(1);
+            document.getElementById('readingAvg').textContent = data.averages.reading.toFixed(1);
+            
+            // 최고/최저 점수 계산
+            const vocabScores = data.scores.filter(s => s.vocab).map(s => s.vocab);
+            const spellScores = data.scores.filter(s => s.spell).map(s => s.spell);
+            const readingScores = data.scores.filter(s => s.reading).map(s => s.reading);
+            
+            if (vocabScores.length > 0) {
+                document.getElementById('vocabDetail').textContent = 
+                    `최고 ${Math.max(...vocabScores)}점 | 최저 ${Math.min(...vocabScores)}점`;
+            } else {
+                document.getElementById('vocabDetail').textContent = '데이터 없음';
+            }
+            
+            if (spellScores.length > 0) {
+                document.getElementById('spellDetail').textContent = 
+                    `최고 ${Math.max(...spellScores)}점 | 최저 ${Math.min(...spellScores)}점`;
+            } else {
+                document.getElementById('spellDetail').textContent = '데이터 없음';
+            }
+            
+            if (readingScores.length > 0) {
+                document.getElementById('readingDetail').textContent = 
+                    `최고 ${Math.max(...readingScores)}점 | 최저 ${Math.min(...readingScores)}점`;
+            } else {
+                document.getElementById('readingDetail').textContent = '데이터 없음';
+            }
+            
+            // 출석률
+            const attendanceRate = data.totalDays > 0 ? (data.attendDays / data.totalDays * 100).toFixed(0) : 0;
+            document.getElementById('attendanceRate').textContent = attendanceRate + '%';
+            document.getElementById('attendanceDetail').textContent = 
+                `${data.attendDays}일 출석 / ${data.totalDays}일`;
+            
+            // 차트 그리기
+            drawChart(data.scores);
+            
+            // 테이블 채우기
+            fillTable(data.scores);
+        }
+        
+        // 차트 그리기
+        function drawChart(scores) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            // 날짜 포맷팅
+            const labels = scores.map(s => {
+                const date = new Date(s.date);
+                return `${date.getMonth() + 1}/${date.getDate()}`;
+            });
+            
+            // 기존 차트 제거
+            if (chart) {
+                chart.destroy();
+            }
+            
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '어휘',
+                            data: scores.map(s => s.vocab),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            spanGaps: true,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#667eea',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1
+                        },
+                        {
+                            label: '스펠',
+                            data: scores.map(s => s.spell),
+                            borderColor: '#764ba2',
+                            backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                            tension: 0.4,
+                            spanGaps: true,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#764ba2',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1
+                        },
+                        {
+                            label: '독해',
+                            data: scores.map(s => s.reading),
+                            borderColor: '#f093fb',
+                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                            tension: 0.4,
+                            spanGaps: true,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#f093fb',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20,
+                                callback: function(value) {
+                                    return value + '점';
+                                },
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                },
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 10,
+                                font: {
+                                    size: 12
+                                },
+                                usePointStyle: true,
+                                boxWidth: 6
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: 12
+                            },
+                            bodyFont: {
+                                size: 11
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '점';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 테이블 채우기
+        function fillTable(scores) {
+            const tbody = document.getElementById('scoreTableBody');
+            tbody.innerHTML = '';
+            
+            scores.forEach(score => {
+                const date = new Date(score.date);
+                const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                
+                // 통과 여부 확인
+                const vocabPass = score.vocab >= 94;
+                const spellPass = score.spell >= 80;
+                const readingPass = score.reading >= 80;
+                
+                const row = `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td>${score.attendance}</td>
+                        <td>${score.vocab ? `<span class="score-badge ${vocabPass ? 'score-pass' : 'score-fail'}">${score.vocab}점${vocabPass ? '✓' : '✗'}</span>` : '-'}</td>
+                        <td>${score.spell ? `<span class="score-badge ${spellPass ? 'score-pass' : 'score-fail'}">${score.spell}점${spellPass ? '✓' : '✗'}</span>` : '-'}</td>
+                        <td>${score.reading ? `<span class="score-badge ${readingPass ? 'score-pass' : 'score-fail'}">${score.reading}점${readingPass ? '✓' : '✗'}</span>` : '-'}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+        
+        // 에러 표시
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 로그아웃
+        function logout() {
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('loginForm').reset();
+            allData = null;
+        }
+    </script>
+</body>
+</html>
