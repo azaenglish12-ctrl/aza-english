@@ -1,0 +1,73 @@
+function doGet(e) {
+  // 파라미터 받기
+  const name = e.parameter.name;
+  const contact = e.parameter.contact;
+  
+  // 인증 체크
+  if (!name || !contact) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: "이름과 연락처를 입력해주세요"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // 스프레드시트 연결
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const scoreSheet = ss.getSheetByName('성적데이터'); // ← 네가 만든 시트명
+  const studentSheet = ss.getSheetByName('학생마스터'); // ← 네가 만든 시트명
+  
+  // 학생 인증
+  const studentData = studentSheet.getDataRange().getValues();
+  let authenticated = false;
+  
+  for (let i = 1; i < studentData.length; i++) {
+    if (studentData[i][0] === name && studentData[i][1].toString() === contact) {
+      authenticated = true;
+      break;
+    }
+  }
+  
+  if (!authenticated) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: "인증 실패"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // 성적 데이터 가져오기
+  const scoreData = scoreSheet.getDataRange().getValues();
+  const studentScores = [];
+  
+  for (let i = 1; i < scoreData.length; i++) {
+    if (scoreData[i][1] === name) {
+      studentScores.push({
+        date: scoreData[i][0],
+        attendance: scoreData[i][3],
+        vocab: scoreData[i][4] || null,
+        spell: scoreData[i][5] || null,
+        reading: scoreData[i][6] || null,
+        grammar: scoreData[i][7] || null
+      });
+    }
+  }
+  
+  // 평균 계산
+  const scores = {
+    vocab: studentScores.filter(s => s.vocab).map(s => s.vocab),
+    spell: studentScores.filter(s => s.spell).map(s => s.spell),
+    reading: studentScores.filter(s => s.reading).map(s => s.reading)
+  };
+  
+  const averages = {
+    vocab: scores.vocab.length ? scores.vocab.reduce((a,b) => a+b, 0) / scores.vocab.length : 0,
+    spell: scores.spell.length ? scores.spell.reduce((a,b) => a+b, 0) / scores.spell.length : 0,
+    reading: scores.reading.length ? scores.reading.reduce((a,b) => a+b, 0) / scores.reading.length : 0
+  };
+  
+  // 결과 반환
+  return ContentService.createTextOutput(JSON.stringify({
+    student: name,
+    scores: studentScores,
+    averages: averages,
+    totalDays: studentScores.length,
+    attendDays: studentScores.filter(s => s.attendance === '출석').length
+  })).setMimeType(ContentService.MimeType.JSON);
+}
